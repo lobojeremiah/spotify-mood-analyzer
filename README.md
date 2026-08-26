@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Spotify Mood Analyzer
 
 A full-stack portfolio project for analyzing Spotify listening-history exports.
@@ -117,3 +118,6 @@ Records are normalized into a shared internal shape before validation and import
 - Group songs into listening clusters.
 - Compare clusters with rule-based mood classification.
 
+=======
+# spotify-mood-analyzer
+>>>>>>> 7244ea0c2368772f46588680f75e01ba3a77a364

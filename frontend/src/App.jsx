@@ -100,7 +100,7 @@ export default function App() {
             Seven years of sound, <em>remembered.</em>
           </h1>
           <p className="hero-description">
-            70,692 listening events transformed into an interactive music database. Explore peak listening rhythms, album sleeve cards, and MusicBrainz metadata.
+            Explore my listening history through trends, listening rhythms, repeat patterns, and music metadata. Scroll to discover patterns, switch between views, and use the archive to search for specific artists, tracks, and albums.
           </p>
         </div>
 

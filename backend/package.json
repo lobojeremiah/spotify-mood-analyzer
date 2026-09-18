@@ -7,7 +7,11 @@
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
     "db:migrate": "node scripts/migrate.js",
-    "import": "node scripts/importSpotifyHistory.js"
+    "import": "node scripts/importSpotifyHistory.js",
+    "test:musicbrainz": "node scripts/testMusicBrainzClient.js",
+    "test:musicbrainz:matching": "node scripts/testMusicBrainzMatching.js",
+    "test:musicbrainz:enrichment": "node scripts/testMusicBrainzEnrichment.js",
+    "enrich": "node scripts/testMusicBrainzEnrichment.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
@@ -17,4 +21,3 @@
   },
   "devDependencies": {}
 }
-

@@ -1,155 +1,187 @@
-import { useEffect, useMemo, useState } from "react";
-import { Activity, BarChart3, Clock3, Music2, RefreshCcw } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { Header } from "./components/Header";
+import { SearchArchive } from "./components/SearchArchive";
+import { ArchiveDrawer } from "./components/ArchiveDrawer";
+import { YearsInSound } from "./components/YearsInSound";
+import { OnRepeat } from "./components/OnRepeat";
+import { ListeningRhythm } from "./components/ListeningRhythm";
+import { MusicBrainzProfile } from "./components/MusicBrainzProfile";
+import { MoodLandscape } from "./components/MoodLandscape";
+import { Headphones, Clock, Music, Users, Calendar } from "lucide-react";
 import "./styles.css";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:4000";
+const API = import.meta.env.VITE_API_BASE_URL || "http://localhost:4000";
 
-function formatHours(value) {
-  return `${Number(value || 0).toFixed(1)}h`;
-}
-
-function App() {
-  const [summary, setSummary] = useState(null);
-  const [analytics, setAnalytics] = useState(null);
+export default function App() {
+  const [theme, setTheme] = useState(() => localStorage.getItem("spotify_mood_theme") || "dark");
+  const [metric, setMetric] = useState("plays");
+  const [data, setData] = useState(null);
   const [status, setStatus] = useState("loading");
+  const [selectedObject, setSelectedObject] = useState(null);
 
-  async function loadData() {
-    setStatus("loading");
-
-    try {
-      const [summaryResponse, analyticsResponse] = await Promise.all([
-        fetch(`${API_BASE_URL}/api/summary`),
-        fetch(`${API_BASE_URL}/api/analytics`)
-      ]);
-
-      if (!summaryResponse.ok) throw new Error("Summary request failed");
-
-      setSummary(await summaryResponse.json());
-      setAnalytics(analyticsResponse.ok ? await analyticsResponse.json() : null);
-      setStatus("ready");
-    } catch (error) {
-      console.error(error);
-      setStatus("error");
-    }
-  }
+  const searchRef = useRef(null);
 
   useEffect(() => {
-    loadData();
-  }, []);
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("spotify_mood_theme", theme);
+  }, [theme]);
 
-  const peakHour = useMemo(() => {
-    const heatmap = analytics?.listeningHoursHeatmap || [];
-    return heatmap.reduce((winner, item) => {
-      if (!winner || item.hours > winner.hours) return item;
-      return winner;
-    }, null);
-  }, [analytics]);
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
+  };
+
+  useEffect(() => {
+    let active = true;
+    Promise.all([
+      fetch(`${API}/api/overview`).then((r) => r.json()),
+      fetch(`${API}/api/top/artists?metric=${metric}&limit=10`).then((r) => r.json()),
+      fetch(`${API}/api/top/tracks?metric=${metric}&limit=12`).then((r) => r.json()),
+      fetch(`${API}/api/listening/trends`).then((r) => r.json()),
+      fetch(`${API}/api/listening/heatmap`).then((r) => r.json()),
+      fetch(`${API}/api/listening/rhythm-stats`).then((r) => r.json()),
+      fetch(`${API}/api/metadata/coverage`).then((r) => r.json()),
+      fetch(`${API}/api/metadata/tags?limit=30`).then((r) => r.json()),
+      fetch(`${API}/api/moods`).then((r) => r.json())
+    ])
+      .then(([overview, artists, tracks, trends, heatmap, rhythmStats, coverage, tags, moods]) => {
+        if (active) {
+          setData({
+            overview,
+            artists,
+            tracks,
+            trends: trends.items,
+            heatmap,
+            rhythmStats,
+            coverage,
+            tags,
+            moods
+          });
+          setStatus("ready");
+        }
+      })
+      .catch((err) => {
+        console.error("Fetch error:", err);
+        if (active) setStatus("error");
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [metric]);
+
+  const scrollToSearch = () => {
+    if (searchRef.current) {
+      searchRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
+  const handleSelectTag = (tag) => {
+    scrollToSearch();
+    // Dispatch query to search archive if needed
+  };
+
+  const formatHours = (val) => Number(val || 0).toFixed(1) + "h";
+  const formatNum = (val) => new Intl.NumberFormat().format(val || 0);
 
   return (
-    <main className="app-shell">
-      <header className="topbar">
+    <div className="music-app">
+      <Header
+        theme={theme}
+        toggleTheme={toggleTheme}
+        overview={data?.overview}
+        scrollToSearch={scrollToSearch}
+      />
+
+      {/* HERO EDITORIAL SECTION */}
+      <section className="hero-editorial">
         <div>
-          <p className="eyebrow">Portfolio Analytics</p>
-          <h1>Spotify Mood Analyzer</h1>
+          <span className="hero-tag">Personal Listening History Archive · 2019—2026</span>
+          <h1>
+            Seven years of sound, <em>remembered.</em>
+          </h1>
+          <p className="hero-description">
+            70,692 listening events transformed into an interactive music database. Explore peak listening rhythms, album sleeve cards, and MusicBrainz metadata.
+          </p>
         </div>
-        <button className="icon-button" onClick={loadData} aria-label="Refresh dashboard">
-          <RefreshCcw size={18} />
-        </button>
-      </header>
+
+        <div className="hero-metrics-card">
+          <div className="metric-box">
+            <strong>{formatHours(data?.overview?.total_hours)}</strong>
+            <span>Hours In Headphones</span>
+          </div>
+          <div className="metric-box">
+            <strong>{formatNum(data?.overview?.listening_events)}</strong>
+            <span>Moments Played</span>
+          </div>
+          <div className="metric-box">
+            <strong>{formatNum(data?.overview?.unique_tracks)}</strong>
+            <span>Unique Tracks</span>
+          </div>
+          <div className="metric-box">
+            <strong>{formatNum(data?.overview?.unique_artists)}</strong>
+            <span>Artists Visited</span>
+          </div>
+        </div>
+      </section>
 
       {status === "error" && (
-        <section className="notice">
-          The dashboard could not reach the API. Start the backend, then refresh.
-        </section>
+        <div style={{ background: "#f8d7da", color: "#721c24", padding: 16, borderRadius: 8, marginBottom: 24 }}>
+          Unable to connect to the backend server API (http://localhost:4000). Please check backend status.
+        </div>
       )}
 
-      <section className="metrics-grid">
-        <Metric icon={<Music2 />} label="Listening Events" value={summary?.listening_events || 0} />
-        <Metric icon={<Clock3 />} label="Total Hours" value={formatHours((summary?.total_ms_played || 0) / 3600000)} />
-        <Metric icon={<BarChart3 />} label="Unique Tracks" value={summary?.unique_tracks || 0} />
-        <Metric icon={<Activity />} label="Peak Slot" value={peakHour ? `${peakHour.hour}:00` : "Pending"} />
-      </section>
+      {/* 01. SEARCH ARCHIVE */}
+      <SearchArchive
+        apiBase={API}
+        onSelectResult={setSelectedObject}
+        searchRef={searchRef}
+      />
 
-      <section className="dashboard-grid">
-        <Panel title="Top Artists">
-          <RankedList items={analytics?.topArtists || []} primaryKey="artist" secondaryKey="hours" />
-        </Panel>
+      {/* 02. YEARS IN SOUND */}
+      <YearsInSound items={data?.trends} />
 
-        <Panel title="Top Tracks">
-          <RankedList items={analytics?.topTracks || []} primaryKey="track" secondaryKey="artist" />
-        </Panel>
+      {/* 03. ON REPEAT (ARTISTS & ALBUM SLEEVES) */}
+      <OnRepeat
+        artists={data?.artists}
+        tracks={data?.tracks}
+        metric={metric}
+        setMetric={setMetric}
+        onSelectResult={setSelectedObject}
+      />
 
-        <Panel title="Listening Trends">
-          <TrendBars items={analytics?.listeningTrends || []} />
-        </Panel>
+      {/* 04. 7x24 LISTENING RHYTHM MATRIX */}
+      <ListeningRhythm
+        heatmap={data?.heatmap}
+        rhythmStats={data?.rhythmStats}
+      />
 
-        <Panel title="Genre Distribution">
-          <RankedList items={analytics?.genreDistribution || []} primaryKey="genre" secondaryKey="plays" />
-        </Panel>
-      </section>
-    </main>
-  );
-}
+      {/* 05. MUSICBRAINZ TAG CLOUD */}
+      <MusicBrainzProfile
+        coverage={data?.coverage}
+        tags={data?.tags}
+        onSelectTag={handleSelectTag}
+      />
 
-function Metric({ icon, label, value }) {
-  return (
-    <article className="metric-card">
-      <div className="metric-icon">{icon}</div>
-      <div>
-        <p>{label}</p>
-        <strong>{value}</strong>
-      </div>
-    </article>
-  );
-}
+      {/* 06. MOOD LANDSCAPE */}
+      <MoodLandscape
+        moods={data?.moods}
+        onSelectTag={handleSelectTag}
+      />
 
-function Panel({ title, children }) {
-  return (
-    <section className="panel">
-      <h2>{title}</h2>
-      {children}
-    </section>
-  );
-}
+      {/* ARCHIVE DETAIL DRAWER / MODAL */}
+      <ArchiveDrawer
+        selectedObject={selectedObject}
+        onClose={() => setSelectedObject(null)}
+        apiBase={API}
+      />
 
-function RankedList({ items, primaryKey, secondaryKey }) {
-  if (!items.length) return <p className="empty-state">Run imports and analytics to fill this view.</p>;
-
-  return (
-    <ol className="ranked-list">
-      {items.slice(0, 8).map((item, index) => (
-        <li key={`${primaryKey}-${index}`}>
-          <span>{index + 1}</span>
-          <div>
-            <strong>{item[primaryKey]}</strong>
-            <p>{item[secondaryKey]}</p>
-          </div>
-          {item.plays && <em>{item.plays}</em>}
-        </li>
-      ))}
-    </ol>
-  );
-}
-
-function TrendBars({ items }) {
-  if (!items.length) return <p className="empty-state">Listening trends will appear after analytics are generated.</p>;
-
-  const maxHours = Math.max(...items.map((item) => item.hours));
-
-  return (
-    <div className="trend-bars">
-      {items.slice(-24).map((item) => (
-        <div key={item.date} className="trend-row">
-          <time>{item.date}</time>
-          <span>
-            <i style={{ width: `${Math.max((item.hours / maxHours) * 100, 4)}%` }} />
-          </span>
-          <strong>{formatHours(item.hours)}</strong>
-        </div>
-      ))}
+      {/* SITE FOOTER */}
+      <footer className="site-footer">
+        <p>Spotify Mood Analyzer · Personal Listening Data Application</p>
+        <p style={{ marginTop: 4 }}>
+          PostgreSQL Database · Node.js Express API · MusicBrainz Open Metadata Enrichment
+        </p>
+      </footer>
     </div>
   );
 }
-
-export default App;
-

@@ -177,7 +177,7 @@ export default function App() {
 
       {/* SITE FOOTER */}
       <footer className="site-footer">
-        <p>Spotify Mood Analyzer · Personal Listening Data Application</p>
+        <p>Soundscape · Personal Listening Data Application</p>
         <p style={{ marginTop: 4 }}>
           PostgreSQL Database · Node.js Express API · MusicBrainz Open Metadata Enrichment
         </p>

@@ -12,7 +12,7 @@ export function Header({ theme, toggleTheme, overview, scrollToSearch }) {
           <Music size={20} />
         </div>
         <div>
-          <h2 className="brand-title">Spotify Mood Analyzer</h2>
+          <h2 className="brand-title">Soundscape</h2>
           <span className="brand-subtitle">Personal Listening History · 2019–2026</span>
         </div>
       </div>

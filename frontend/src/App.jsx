@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { Analytics } from "@vercel/analytics/react";
 import { Header } from "./components/Header";
 import { SearchArchive } from "./components/SearchArchive";
 import { ArchiveDrawer } from "./components/ArchiveDrawer";
@@ -182,6 +183,9 @@ export default function App() {
           PostgreSQL Database · Node.js Express API · MusicBrainz Open Metadata Enrichment
         </p>
       </footer>
+
+      {/* VERCEL WEB ANALYTICS */}
+      <Analytics />
     </div>
   );
 }

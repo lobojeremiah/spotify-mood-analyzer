@@ -17,7 +17,14 @@ const rank = (metric) => metric === "hours" ? "hours DESC, plays DESC" : "plays 
 app.use(cors({ origin: config.corsOrigin === "*" ? "*" : config.corsOrigin.split(",").map((origin) => origin.trim()) }));
 app.use(express.json());
 
-app.get("/health", asyncRoute(async (_req, res) => res.json({ ok: true, database: (await query("SELECT 1 AS ok")).rows[0].ok === 1 })));
+app.get("/api/health", async (_req, res) => {
+  try {
+    await query("SELECT 1");
+    res.json({ status: "ok" });
+  } catch (error) {
+    res.status(500).json({ status: "error" });
+  }
+});
 
 app.get("/api/overview", asyncRoute(async (_req, res) => {
   const result = await query(`SELECT COUNT(*)::int AS listening_events, ROUND(SUM(ms_played)/3600000.0,2)::float AS total_hours, COUNT(DISTINCT lh.track_id)::int AS unique_tracks, COUNT(DISTINCT t.artist_id)::int AS unique_artists, MIN(played_at)::date::text AS first_listening_date, MAX(played_at)::date::text AS last_listening_date, ROUND(AVG(ms_played)/60000.0,2)::float AS average_minutes_per_event FROM listening_history lh JOIN tracks t ON t.id=lh.track_id`);

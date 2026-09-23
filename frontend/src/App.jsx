@@ -174,7 +174,6 @@ export default function App() {
         onClose={() => setSelectedObject(null)}
         apiBase={API}
       />
-
       {/* SITE FOOTER */}
       <footer className="site-footer">
         <p>Soundscape · Personal Listening Data Application</p>

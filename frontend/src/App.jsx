@@ -108,11 +108,11 @@ export default function App() {
         <div className="hero-metrics-card">
           <div className="metric-box">
             <strong>{formatHours(data?.overview?.total_hours)}</strong>
-            <span>Hours In Headphones</span>
+            <span>Hours Played</span>
           </div>
           <div className="metric-box">
             <strong>{formatNum(data?.overview?.listening_events)}</strong>
-            <span>Moments Played</span>
+            <span>Songs Played</span>
           </div>
           <div className="metric-box">
             <strong>{formatNum(data?.overview?.unique_tracks)}</strong>
@@ -120,7 +120,7 @@ export default function App() {
           </div>
           <div className="metric-box">
             <strong>{formatNum(data?.overview?.unique_artists)}</strong>
-            <span>Artists Visited</span>
+            <span>Total Artists Visited</span>
           </div>
         </div>
       </section>
